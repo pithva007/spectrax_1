@@ -89,6 +89,41 @@ function App() {
     }
   };
 
+  // Show loading state while auth is being checked
+  if (authLoading) {
+    return (
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  // If not authenticated, show auth screens
+  if (!user) {
+    return (
+      <main className="spectrax-app">
+        {currentScreen === "login" && (
+          <LoginScreen
+            onLoginSuccess={() => navigateTo("welcome")}
+            onSignUpClick={() => navigateTo("signup")}
+            onForgotPasswordClick={() => navigateTo("forgot-password")}
+          />
+        )}
+        {currentScreen === "signup" && (
+          <SignUpScreen
+            onSignUpSuccess={() => navigateTo("welcome")}
+            onLoginClick={() => navigateTo("login")}
+          />
+        )}
+        {currentScreen === "forgot-password" && (
+          <ForgotPasswordScreen onBack={() => navigateTo("login")} />
+        )}
+      </main>
+    );
+  }
+
+  // If authenticated, show main app with theme toggle and workout screens
   return (
     <main
       className="spectrax-app"

@@ -8,7 +8,7 @@ import { exercises, ExerciseConfig } from "./config/exercises";
 import { BodyType } from "./services/bodyTypeEngine";
 import { useTheme } from "./context/ThemeContext";
 import HistoryPage from "./HistoryPage";
-import { SummaryScreenSkeleton } from   './components/SummaryScreenSkeleton';
+import { SummaryScreenSkeleton } from "./components/SummaryScreenSkeleton";
 
 type Screen =
   | "welcome"
@@ -61,8 +61,14 @@ function App() {
   const handleWorkoutEnd = (
     finalStats: Omit<WorkoutStats, "exerciseName"> & { tags?: string[] },
   ) => {
+    setStatsLoading(true);
     setStats({ ...finalStats, exerciseName: selectedExercise.name });
     navigateTo("summary");
+
+    // Show skeleton briefly before rendering real summary
+    setTimeout(() => {
+      setStatsLoading(false);
+    }, 1500);
   };
 
   const handleAutoDetect = (exerciseKey: string) => {
@@ -90,7 +96,7 @@ function App() {
     >
       <button
         onClick={toggleTheme}
-        className="theme-toggle"
+        className={`theme-toggle ${currentScreen === "workout" ? "workout-active" : ""}`}
         aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
       >
         {theme === "dark" ? "☾ Dark Mode" : "☀ Light Mode"}

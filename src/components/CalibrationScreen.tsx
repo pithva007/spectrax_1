@@ -132,7 +132,8 @@ export const CalibrationScreen: React.FC<CalibrationScreenProps> = ({
 
   useEffect(() => {
     if (countdownActive && countdownSeconds > 0) {
-      countdownIntervalRef.current = setInterval(() => {
+      
+      countdownIntervalRef.current = window.setInterval(() => {
         setCountdownSeconds(prev => prev - 1);
       }, 1000);
       return () => {

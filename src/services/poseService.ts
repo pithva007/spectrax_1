@@ -13,7 +13,7 @@ const Pose = (window as any).Pose as typeof PoseType;
  */
 
 export class PoseService {
-  private pose: Pose | null = null;
+  private pose: any = null;
   private isLoaded: boolean = false;
   private inProgress: boolean = false;
   private errorCount: number = 0;

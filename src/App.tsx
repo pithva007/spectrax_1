@@ -73,7 +73,7 @@ function App() {
     <main className="spectrax-app" style={{ background: 'var(--bg-primary)', minHeight: '100vh' }}>
       <button
         onClick={toggleTheme}
-        className="theme-toggle"
+        className={`theme-toggle ${currentScreen === 'workout' ? 'workout-active' : ''}`}
         aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
       >
         {theme === 'dark' ? '☾ Dark Mode' : '☀ Light Mode'}

@@ -45,7 +45,7 @@ export const CalibrationScreen: React.FC<CalibrationScreenProps> = ({
   const frameId = useRef<number>(0);
   const lastProcessTime = useRef<number>(0);
   const FPS_LIMIT = 15;
-  const countdownIntervalRef = useRef<number | null>(null);
+  const countdownIntervalRef = useRef<any>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -132,7 +132,7 @@ export const CalibrationScreen: React.FC<CalibrationScreenProps> = ({
 
   useEffect(() => {
     if (countdownActive && countdownSeconds > 0) {
-      countdownIntervalRef.current = setInterval(() => {
+      countdownIntervalRef.current = window.setInterval(() => {
         setCountdownSeconds(prev => prev - 1);
       }, 1000);
       return () => {
@@ -174,6 +174,7 @@ export const CalibrationScreen: React.FC<CalibrationScreenProps> = ({
 
   return (
     <div className="screen-container" style={{ background: 'var(--bg-primary)' }}>
+
       <div className="camera-viewport" style={{ 
         position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: 'radial-gradient(circle at center, #111a3d 0%, #0a0a1a 100%)'

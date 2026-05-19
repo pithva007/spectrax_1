@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Mail, Lock, User, Loader } from "lucide-react";
 import "../styles/auth.css";
@@ -21,7 +21,52 @@ export function SignUpScreen({
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
 
-  React.useEffect(() => {
+  // Safe localStorage helper to prevent private-browsing crashes
+  const safeGetItem = (key: string): string | null => {
+    try {
+      return localStorage.getItem(key);
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const safeSetItem = (key: string, value: string) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch (e) {}
+  };
+
+  const safeRemoveItem = (key: string) => {
+    try {
+      localStorage.removeItem(key);
+    } catch (e) {}
+  };
+
+  // Load lockout state from localStorage when email changes
+  useEffect(() => {
+    if (!email) {
+      setFailedAttempts(0);
+      setTimeLeft(0);
+      return;
+    }
+    const attemptsKey = `auth_attempts_signup_${email}`;
+    const lockoutKey = `auth_lockout_signup_${email}`;
+
+    const storedAttempts = parseInt(safeGetItem(attemptsKey) || "0", 10);
+    const storedLockout = parseInt(safeGetItem(lockoutKey) || "0", 10);
+
+    setFailedAttempts(storedAttempts);
+
+    const now = Date.now();
+    if (storedLockout > now) {
+      setTimeLeft(Math.ceil((storedLockout - now) / 1000));
+    } else {
+      setTimeLeft(0);
+    }
+  }, [email]);
+
+  // Handle countdown timer ticking
+  useEffect(() => {
     if (timeLeft <= 0) return;
     const timer = setTimeout(() => {
       setTimeLeft(t => t - 1);
@@ -56,20 +101,52 @@ export function SignUpScreen({
 
     try {
       await signUp(email, password, displayName);
+      
+      // Reset attempts and lockout on success
+      const attemptsKey = `auth_attempts_signup_${email}`;
+      const lockoutKey = `auth_lockout_signup_${email}`;
+      safeRemoveItem(attemptsKey);
+      safeRemoveItem(lockoutKey);
+
       setDisplayName("");
       setEmail("");
       setPassword("");
       setConfirmPassword("");
       setFailedAttempts(0);
+      setTimeLeft(0);
       onSignUpSuccess();
     } catch (err: any) {
       console.error("Sign up error:", err);
-      const newAttempts = failedAttempts + 1;
-      setFailedAttempts(newAttempts);
-      if (newAttempts >= 5) {
-        setTimeLeft(60);
+      
+      const errorCode = err.code || "";
+      const isSignUpFailure = errorCode === "auth/email-already-in-use";
+      const isRateLimit = errorCode === "auth/too-many-requests";
+
+      const attemptsKey = `auth_attempts_signup_${email}`;
+      const lockoutKey = `auth_lockout_signup_${email}`;
+
+      if (isRateLimit) {
+        const cooldown = 60;
+        const lockoutTime = Date.now() + cooldown * 1000;
+        safeSetItem(lockoutKey, lockoutTime.toString());
+        setTimeLeft(cooldown);
         setLocalError("Too many failed attempts. Account creation locked for 60 seconds.");
+      } else if (isSignUpFailure) {
+        const newAttempts = failedAttempts + 1;
+        setFailedAttempts(newAttempts);
+        safeSetItem(attemptsKey, newAttempts.toString());
+
+        if (newAttempts >= 5) {
+          const cooldown = 60;
+          const lockoutTime = Date.now() + cooldown * 1000;
+          safeSetItem(lockoutKey, lockoutTime.toString());
+          setTimeLeft(cooldown);
+          setLocalError("Too many failed attempts. Account creation locked for 60 seconds.");
+        } else {
+          setLocalError(err.message || "Failed to create account. Please try again.");
+        }
       } else {
+        // Validation/network/other errors shouldn't increment failure attempts
         setLocalError(err.message || "Failed to create account. Please try again.");
       }
     }

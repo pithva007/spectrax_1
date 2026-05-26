@@ -131,6 +131,8 @@ export const Replay3DModel: React.FC<Replay3DModelProps> = ({
 
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const composerRef = useRef<EffectComposer | null>(null);
+  const bloomPassRef = useRef<UnrealBloomPass | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   // Fallback refs
@@ -440,14 +442,30 @@ export const Replay3DModel: React.FC<Replay3DModelProps> = ({
       disposeRendererPipeline();
 
       const renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
       renderer.setSize(width, height);
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.2;
       // ✨ Enable shadow mapping for dynamic lighting
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFShadowMap; // Better quality shadows
       renderer.shadowMap.autoUpdate = true;
       mountRef.current.appendChild(renderer.domElement);
       rendererRef.current = renderer;
+
+      const composer = new EffectComposer(renderer);
+      composer.addPass(new RenderPass(sceneRef.current, cameraRef.current));
+      composerRef.current = composer;
+
+      const bloomPass = new UnrealBloomPass(
+        new THREE.Vector2(width, height),
+        enableBloom ? bloomStrength : 0,
+        bloomRadius,
+        bloomThreshold,
+      );
+      composer.addPass(bloomPass);
+      bloomPassRef.current = bloomPass;
 
       const controls = new OrbitControls(
         cameraRef.current,
@@ -487,7 +505,7 @@ export const Replay3DModel: React.FC<Replay3DModelProps> = ({
           return;
         }
 
-        renderer.render(sceneRef.current, cameraRef.current);
+        composer.render();
       };
 
       const handleResize = () => {
@@ -498,6 +516,8 @@ export const Replay3DModel: React.FC<Replay3DModelProps> = ({
         cameraRef.current.aspect = w / h;
         cameraRef.current.updateProjectionMatrix();
         rendererRef.current.setSize(w, h);
+        composerRef.current?.setSize(w, h);
+        bloomPassRef.current?.setSize(w, h);
       };
 
       renderer.domElement.addEventListener(
@@ -522,6 +542,9 @@ export const Replay3DModel: React.FC<Replay3DModelProps> = ({
         window.removeEventListener("resize", handleResize);
 
         controls.dispose();
+        composer.dispose();
+        composerRef.current = null;
+        bloomPassRef.current = null;
 
         if (mountRef.current?.contains(renderer.domElement)) {
           mountRef.current.removeChild(renderer.domElement);
@@ -546,7 +569,7 @@ export const Replay3DModel: React.FC<Replay3DModelProps> = ({
           rendererRef.current !== renderer
         )
           return;
-        renderer.render(sceneRef.current, cameraRef.current);
+        composer.render();
       });
     };
 
@@ -751,9 +774,9 @@ export const Replay3DModel: React.FC<Replay3DModelProps> = ({
             controlsRef.current.target.lerp(lookTarget, 0.05);
           } else if (cameraRef.current) {
             cameraRef.current.lookAt(lookTarget);
-
-
+          }
         }
+      }
 
         const applyPose = (
           boneKey: string,
@@ -975,7 +998,7 @@ export const Replay3DModel: React.FC<Replay3DModelProps> = ({
       }
 
       if (sceneRef.current && cameraRef.current && rendererRef.current) {
-        rendererRef.current.render(sceneRef.current, cameraRef.current);
+        composerRef.current?.render();
       }
     };
 

@@ -448,14 +448,13 @@ let offlineHandler: (() => void) | null = null;
 export function initializeAutoSync(userId: string): void {
   onlineHandler = async () => {
     if (syncInProgress) return;
+    syncInProgress = true;
     try {
-      syncInProgress = true;
-      console.log("Device back online. Syncing local workouts...");
       await syncWorkoutsToFirestore(userId);
-      syncInProgress = false;
     } catch (error) {
-      syncInProgress = false;
       console.error("Auto-sync failed:", error);
+    } finally {
+      syncInProgress = false;
     }
   };
 

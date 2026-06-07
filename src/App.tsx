@@ -28,8 +28,6 @@ import { CursorGlow } from "./components/CursorGlow";
 import { FitnessCalculator } from "./components/FitnessCalculator";
 import { PageErrorBoundary } from "./components/PageErrorBoundary";
 import NavBar from "./components/NavBar";
-import About from "./components/About";
-import Contact from "./components/Contact";
 
 const CalibrationScreen = lazy(() => import("./components/CalibrationScreen").then(m => ({ default: m.CalibrationScreen })));
 const WorkoutScreen = lazy(() => import("./components/WorkoutScreen").then(m => ({ default: m.WorkoutScreen })));

@@ -1,4 +1,4 @@
-export { IExercisePlugin, ExerciseContext, RepCompletionResult } from './IExercisePlugin';
+export type { IExercisePlugin, ExerciseContext, RepCompletionResult } from './IExercisePlugin';
 export { BaseExercisePlugin } from './BaseExercisePlugin';
 export { exercisePluginRegistry } from './ExercisePluginRegistry';
 export { SquatPlugin } from './SquatPlugin';

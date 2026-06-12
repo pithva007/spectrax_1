@@ -7,4 +7,4 @@ export interface IExercisePlugin extends ExerciseStrategy {
   readonly configKey: string;
 }
 
-export { ExerciseContext, RepCompletionResult };
+export type { ExerciseContext, RepCompletionResult };
